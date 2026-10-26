@@ -23,10 +23,9 @@ export const followingIds = [
 ];
 
 export const followerIds = [
-  "u02", "u03", "u04", "u05", "u06", "u07",
-  "u08", "u09", "u10", "u11", "u12",
+  "u03", "u04", "u05", "u06", "u07", "u08",
+  "u09", "u10", "u11", "u12", "u13",
 ];
-
 export const tweets = [
   { id: "t01", userId: "u02", content: "Arrancando la semana con nuevas ideas para el proyecto.", createdAt: "2026-10-25T16:30:00-05:00" },
   { id: "t02", userId: "u01", content: "Ya tenemos lista la estructura inicial de la aplicación.", createdAt: "2026-10-25T14:15:00-05:00" },

@@ -6,6 +6,10 @@ import {
   Route,
   Routes,
 } from "react-router";
+import ComposePage from "./pages/ComposePage";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 function PlaceholderPage({ title, description }) {
   return (
@@ -21,9 +25,15 @@ function PlaceholderPage({ title, description }) {
   );
 }
 
+function PageLayout({ children }) {
+  return <main className="container py-4">{children}</main>;
+}
+
 function AppHeader() {
   const navLinkClass = ({ isActive }) =>
-    `nav-link px-0 ${isActive ? "active fw-semibold text-primary" : "text-secondary"}`;
+    `nav-link px-0 ${
+      isActive ? "active fw-semibold text-primary" : "text-secondary"
+    }`;
 
   return (
     <header className="navbar bg-white border-bottom shadow-sm">
@@ -67,93 +77,82 @@ function App() {
       <div className="min-vh-100 bg-light">
         <AppHeader />
 
-        <main className="container py-4">
-          <Routes>
-            <Route path="/" element={<Navigate to="/home" replace />} />
-
-            <Route
-              path="/login"
-              element={
-                <PlaceholderPage
-                  title="Iniciar sesión"
-                  description="Aquí construiremos el formulario de acceso."
-                />
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PlaceholderPage
-                  title="Crear cuenta"
-                  description="Aquí construiremos el formulario de registro."
-                />
-              }
-            />
-            <Route
-              path="/home"
-              element={
-                <PlaceholderPage
-                  title="Inicio"
-                  description="Aquí aparecerán tu perfil, tus contadores y el enlace para publicar."
-                />
-              }
-            />
-            <Route
-              path="/compose"
-              element={
-                <PlaceholderPage
-                  title="Publicar un tweet"
-                  description="Aquí construiremos el formulario de publicación."
-                />
-              }
-            />
-            <Route
-              path="/feed"
-              element={
+        <Routes>
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/home"
+            element={
+              <PageLayout>
+                <HomePage />
+              </PageLayout>
+            }
+          />
+          <Route
+            path="/compose"
+            element={
+              <PageLayout>
+                <ComposePage />
+              </PageLayout>
+            }
+          />
+          <Route
+            path="/feed"
+            element={
+              <PageLayout>
                 <PlaceholderPage
                   title="Feed"
                   description="Aquí aparecerán los tweets recientes."
                 />
-              }
-            />
-            <Route
-              path="/following"
-              element={
+              </PageLayout>
+            }
+          />
+          <Route
+            path="/following"
+            element={
+              <PageLayout>
                 <PlaceholderPage
                   title="Usuarios seguidos"
                   description="Aquí aparecerá la lista de usuarios que sigues."
                 />
-              }
-            />
-            <Route
-              path="/followers"
-              element={
+              </PageLayout>
+            }
+          />
+          <Route
+            path="/followers"
+            element={
+              <PageLayout>
                 <PlaceholderPage
                   title="Seguidores"
                   description="Aquí aparecerá la lista de tus seguidores."
                 />
-              }
-            />
-            <Route
-              path="/users/:username"
-              element={
+              </PageLayout>
+            }
+          />
+          <Route
+            path="/users/:username"
+            element={
+              <PageLayout>
                 <PlaceholderPage
                   title="Tweets del usuario"
                   description="Aquí aparecerá el perfil y los tweets de cada usuario."
                 />
-              }
-            />
-            <Route
-              path="*"
-              element={
+              </PageLayout>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <PageLayout>
                 <PlaceholderPage
                   title="Página no encontrada"
                   description="Usa el menú para volver a una sección del proyecto."
                 />
-              }
-            />
-          </Routes>
-        </main>
+              </PageLayout>
+            }
+          />
+        </Routes>
       </div>
     </BrowserRouter>
   );

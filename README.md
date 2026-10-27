@@ -1,16 +1,81 @@
-# React + Vite
+# Clon de X
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React single-page application that recreates selected X social network screens for a class project.
 
-Currently, two official plugins are available:
+## Milestone 1
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This milestone focuses on the interface and navigation. It uses mock data for users, tweets, followers, and following lists. Authentication, publishing, and follow actions are presentational and are not saved yet.
 
-## React Compiler
+## Technologies
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React
+- Vite
+- React Router
+- Bootstrap 5.3.8
+- Firebase integration is planned for a later milestone.
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Registration and login screens.
+- Home screen with follower and following counters.
+- Tweet composition screen.
+- Chronological feed with pagination.
+- User profile with tweets and counters.
+- Alphabetically sorted followers and following lists.
+- Pagination with a maximum of 10 items per page.
+
+## Routes
+
+| Route | Page |
+| --- | --- |
+| `/login` | Login |
+| `/register` | Registration |
+| `/home` | Home |
+| `/compose` | Compose a tweet |
+| `/feed` | Feed |
+| `/following` | Following list |
+| `/followers` | Followers list |
+| `/users/:username` | User profile and tweets |
+
+## Getting started
+
+Clone the repository and enter the project folder:
+
+```bash
+git clone https://github.com/oscarcitoooooo/Clon-X.git
+cd Clon-X
+```
+
+Install dependencies and start the development server.
+
+**Windows PowerShell:**
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+```
+
+**Other terminals:**
+
+```bash
+npm install
+npm run dev
+```
+
+Open the local URL printed in the terminal.
+
+## Project structure
+
+```text
+src/
+  components/  Reusable tweet, user, and pagination components
+  data/        Mock users, tweets, followers, and following data
+  pages/       Application screens
+  App.jsx      Routes and shared application layout
+  main.jsx     Application entry point
+```
+
+## Team contributions
+
+- **Oscar:** application shell, shared routes, mock data, account and publishing screens, and project documentation.
+- **Yoseth:** tweet and user cards, feed, user profile, followers and following lists, and pagination.

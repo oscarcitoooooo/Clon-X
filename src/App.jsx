@@ -7,9 +7,13 @@ import {
   Routes,
 } from "react-router";
 import ComposePage from "./pages/ComposePage";
+import FeedPage from "./pages/FeedPage";
+import FollowersPage from "./pages/FollowersPage";
+import FollowingPage from "./pages/FollowingPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import UserTweetsPage from "./pages/UserTweetsPage";
 
 function PlaceholderPage({ title, description }) {
   return (
@@ -81,6 +85,7 @@ function App() {
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
           <Route
             path="/home"
             element={
@@ -89,6 +94,7 @@ function App() {
               </PageLayout>
             }
           />
+
           <Route
             path="/compose"
             element={
@@ -97,50 +103,43 @@ function App() {
               </PageLayout>
             }
           />
+
           <Route
             path="/feed"
             element={
               <PageLayout>
-                <PlaceholderPage
-                  title="Feed"
-                  description="Aquí aparecerán los tweets recientes."
-                />
+                <FeedPage />
               </PageLayout>
             }
           />
+
           <Route
             path="/following"
             element={
               <PageLayout>
-                <PlaceholderPage
-                  title="Usuarios seguidos"
-                  description="Aquí aparecerá la lista de usuarios que sigues."
-                />
+                <FollowingPage />
               </PageLayout>
             }
           />
+
           <Route
             path="/followers"
             element={
               <PageLayout>
-                <PlaceholderPage
-                  title="Seguidores"
-                  description="Aquí aparecerá la lista de tus seguidores."
-                />
+                <FollowersPage />
               </PageLayout>
             }
           />
+
           <Route
             path="/users/:username"
             element={
               <PageLayout>
-                <PlaceholderPage
-                  title="Tweets del usuario"
-                  description="Aquí aparecerá el perfil y los tweets de cada usuario."
-                />
+                <UserTweetsPage />
               </PageLayout>
             }
           />
+
           <Route
             path="*"
             element={

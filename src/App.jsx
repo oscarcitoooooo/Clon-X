@@ -42,8 +42,15 @@ function AppHeader() {
   return (
     <header className="navbar bg-white border-bottom shadow-sm">
       <div className="container d-flex flex-wrap justify-content-between gap-3">
-        <Link className="navbar-brand fw-bold text-primary me-2" to="/home">
-          Clon de X
+        <Link
+          className="navbar-brand clonx-brand d-inline-flex align-items-center gap-2 me-2"
+          to="/home"
+          aria-label="Clon de X, volver al inicio"
+        >
+          <span className="clonx-brand-mark" aria-hidden="true">
+            X
+          </span>
+          <span>Clon de X</span>
         </Link>
 
         <nav

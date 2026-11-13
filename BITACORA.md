@@ -29,7 +29,17 @@ Se hicieron paginas para mostrar los seguidores y las personas que sigue cada us
 Se trabajo en mostrar maximo 10 elementos por pagina para que las listas no sean tan largas.
 
 ### 2.8 Inicio con Google
-Se agrego un boton para iniciar sesion con Google, pero falta conectarlo para que funcione de verdad.
+Se conecto el boton de Google con Firebase Authentication mediante el SDK web. La sesion se conserva al actualizar y el cierre de sesion devuelve al login.
+
+
+### 2.9 Integracion con Firebase Authentication
+**Prompt de Oscar:** “Empecemos con la configuracion de Firebase para que el inicio de sesion con Google funcione; guiame paso por paso.”
+
+**Asistencia recibida:** Se dieron instrucciones para crear el proyecto Firebase, registrar la app web, habilitar Google como proveedor y autorizar `localhost`. Se instalo el SDK `firebase` y se conecto el boton con `signInWithPopup`, el estado de sesion con `onAuthStateChanged` y el cierre con `signOut`. Tambien se actualizaron las rutas protegidas y la pagina de inicio para mostrar la cuenta autenticada.
+
+**Archivos modificados:** `package.json`, `package-lock.json`, `src/App.jsx`, `src/pages/LoginPage.jsx` y `src/pages/HomePage.jsx`. La configuracion local esta en `.env.local`, archivo ignorado por Git.
+
+**Validacion manual de Oscar:** El acceso con Google llego a `/home`, la sesion permanecio despues de actualizar la pagina y “Cerrar sesion” regreso a `/login`.
 
 ## 3. Tecnologias usadas
 - React
@@ -38,7 +48,7 @@ Se agrego un boton para iniciar sesion con Google, pero falta conectarlo para qu
 - Vite
 
 ## 4. Estado del proyecto
-El proyecto tiene varias partes preparadas, pero falta terminar de conectar algunas funciones y revisar que todo funcione correctamente.
+La autenticacion con Google mediante Firebase esta conectada y validada manualmente. Otras funciones del proyecto siguen usando datos de prueba y pueden ampliarse en los siguientes avances.
 
 ## 5. Conclusion
-Con este proyecto he aprendido a crear componentes en React, usar Bootstrap y organizar mejor el codigo. Todavia faltan algunas cosas por terminar para completar el clon de X.
+Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, organizar el codigo e integrar autenticacion con Firebase. La bitacora registra tambien la asistencia de IA utilizada durante el desarrollo.

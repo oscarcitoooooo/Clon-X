@@ -66,3 +66,13 @@ Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, org
 **Mensaje del estudiante:** “si” (confirmacion de que el inicio con Google siguio funcionando).  
 **Resumen de la respuesta:** Se actualizo el README para reflejar la autenticacion y el estado de Milestone 2, se agrego una plantilla de variables locales para Firebase y se versionaron las reglas actuales de Firestore. La plantilla no contiene credenciales reales.  
 **Archivos creados o modificados:** `README.md`, `.env.example`, `firestore.rules`.
+
+## Firestore tweet publishing
+
+Authenticated users can publish tweets to the `tweets` collection in Cloud Firestore. Each document stores the content, author ID, username, and server creation timestamp.
+
+The application validates that a tweet contains text and does not exceed 280 characters. Firestore rules require an authenticated user, verify that the author ID and username match the signed-in user's profile, and prevent tweet updates or deletion.
+
+The feed listens for Firestore changes in real time and displays tweets from newest to oldest. The home page also listens for changes and displays the user's three latest tweets. When a Google user signs in without a Firestore profile, the application creates a public profile with a generated username.
+
+Firestore security rules are maintained in `firestore.rules`. The local Firebase configuration belongs in `.env.local`; do not commit that file.

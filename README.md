@@ -114,9 +114,9 @@ The feed listens for Firestore changes in real time and displays tweets from new
 
 Firestore security rules are maintained in `firestore.rules`. The local Firebase configuration belongs in `.env.local`; do not commit that file.
 
-## Following users with Firestore
+## Finding and following users with Firestore
 
-The `/following` page searches for an exact username, with or without `@`, and ignores letter case. It resolves the username through `usernameIndex`, displays the public Firestore profile, and lets the signed-in user follow or unfollow that account.
+The signed-in navigation bar includes a username search available from every page. Enter an exact username, with or without `@`; submitting opens that account's public profile through the `/users/:username` route. From the profile, use the follow button or community lists to follow or unfollow accounts. The `/following` page is reserved for the list of accounts the signed-in user follows.
 
 Follow relationships are stored at `follows/{followerId}/following/{followedId}`. Firestore rules prevent users from following themselves, creating duplicate relationships, or changing another user's follow records. The following list updates in real time.
 

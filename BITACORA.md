@@ -129,3 +129,11 @@ Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, org
 
 **Verificación automatizada:** `npm.cmd run lint` finalizó sin errores y `npm.cmd run build` completó correctamente. Vite mostró únicamente el aviso de que el archivo JavaScript principal supera 500 kB minificado.
 **Validación manual con dos cuentas:** Pendiente de que Oscar y Yoseth revisen seguimiento, contadores, feed filtrado, listas, paginación y privacidad en Firebase. La revisión requiere publicar las reglas actualizadas y completar una consulta de grupo de colección con su índice de Firestore.
+
+## 2.17 Buscador de usuarios en la navegación superior
+**Fecha:** 2026-11-14
+**Herramienta y modelo:** Codex, GPT-6
+**Solicitud del estudiante:** Mover el buscador de usuarios desde la página Seguidos a la parte superior para acceder desde las demás páginas.
+**Asistencia recibida:** Se agregó un formulario de búsqueda de nombre de usuario a la navegación autenticada. Al enviar un nombre, con o sin `@`, la aplicación abre la ruta del perfil; la página Seguidos queda dedicada a mostrar las cuentas seguidas y sus acciones. Se actualizó la descripción de estas funciones en el README.
+**Archivos modificados:** `src/App.jsx`, `src/pages/FollowingPage.jsx`, `README.md` y `BITACORA.md`.
+**Validación manual:** Pendiente de que Oscar busque un usuario desde Inicio, Feed y Seguidos y confirme que llega a su perfil.

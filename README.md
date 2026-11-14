@@ -108,7 +108,7 @@ src/
 
 Authenticated users can publish tweets to the `tweets` collection in Cloud Firestore. Each document stores the content, author ID, username, and server creation timestamp.
 
-The application validates that a tweet contains text and does not exceed 280 characters. Firestore rules require an authenticated user, verify that the author ID and username match the signed-in user's profile, and prevent tweet updates or deletion.
+The application validates that a tweet contains text and does not exceed 280 characters. Firestore rules require an authenticated user, verify that the author ID and username match the signed-in user's profile, prevent tweet updates, and allow deletion only by the tweet's author. The delete control is shown only on the signed-in user's tweets. Since the home page, feed, and profiles listen to Firestore in real time, a deleted tweet disappears from each view without a manual refresh.
 
 The feed listens for Firestore changes in real time and displays tweets from newest to oldest. The home page also listens for changes and displays the user's three latest tweets. When a Google user signs in without a Firestore profile, the application creates a public profile with a generated username.
 
@@ -116,7 +116,7 @@ Firestore security rules are maintained in `firestore.rules`. The local Firebase
 
 ## Finding and following users with Firestore
 
-The signed-in navigation bar includes a username search available from every page. Enter an exact username, with or without `@`; submitting opens that account's public profile through the `/users/:username` route. From the profile, use the follow button or community lists to follow or unfollow accounts. The `/following` page is reserved for the list of accounts the signed-in user follows.
+The global search field in the top navigation searches for an exact username, with or without `@`, and ignores letter case. It resolves the username through `usernameIndex`, displays the public Firestore profile, links to that profile, and lets the signed-in user follow or unfollow that account. The `/following` page is dedicated to the list of accounts the signed-in user follows.
 
 Follow relationships are stored at `follows/{followerId}/following/{followedId}`. Firestore rules prevent users from following themselves, creating duplicate relationships, or changing another user's follow records. The following list updates in real time.
 

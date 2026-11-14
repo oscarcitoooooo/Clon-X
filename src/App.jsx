@@ -7,7 +7,6 @@ import {
   Routes,
   useNavigate,
 } from "react-router";
-import { useState } from "react";
 import ComposePage from "./pages/ComposePage";
 import FeedPage from "./pages/FeedPage";
 import FollowersPage from "./pages/FollowersPage";
@@ -16,6 +15,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage, { AuthProvider, useAuth } from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UserTweetsPage from "./pages/UserTweetsPage";
+import UserSearch from "./components/UserSearch";
 
 function PlaceholderPage({ title, description }) {
   return (
@@ -51,7 +51,6 @@ function ProtectedPage({ children }) {
 function AppHeader() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
   const navLinkClass = ({ isActive }) =>
     `nav-link px-0 ${isActive ? "active fw-semibold text-primary" : "text-secondary"}`;
   const username = user?.username ?? user?.email?.split("@")[0] ?? user?.displayName ?? "usuario";
@@ -59,14 +58,6 @@ function AppHeader() {
   async function handleLogout() {
     await logout();
     navigate("/login", { replace: true });
-  }
-
-  function handleUserSearch(event) {
-    event.preventDefault();
-    const username = searchTerm.trim().replace(/^@/, "");
-    if (!username) return;
-    navigate(`/users/${encodeURIComponent(username)}`);
-    setSearchTerm("");
   }
 
   return (
@@ -93,29 +84,7 @@ function AppHeader() {
               <NavLink className={navLinkClass} to="/followers">Seguidores</NavLink>
             </nav>
 
-            <form
-              className="d-flex flex-grow-1"
-              style={{ maxWidth: "18rem" }}
-              role="search"
-              onSubmit={handleUserSearch}
-            >
-              <label className="visually-hidden" htmlFor="globalUserSearch">
-                Buscar usuario
-              </label>
-              <input
-                className="form-control form-control-sm"
-                id="globalUserSearch"
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Buscar usuario"
-                maxLength={21}
-                required
-              />
-              <button className="btn btn-primary btn-sm ms-2" type="submit">
-                Buscar
-              </button>
-            </form>
+            <UserSearch />
 
             <div className="d-flex align-items-center gap-3">
               <span className="small fw-semibold">@{username}</span>

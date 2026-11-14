@@ -130,10 +130,24 @@ Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, org
 **Verificación automatizada:** `npm.cmd run lint` finalizó sin errores y `npm.cmd run build` completó correctamente. Vite mostró únicamente el aviso de que el archivo JavaScript principal supera 500 kB minificado.
 **Validación manual con dos cuentas:** Pendiente de que Oscar y Yoseth revisen seguimiento, contadores, feed filtrado, listas, paginación y privacidad en Firebase. La revisión requiere publicar las reglas actualizadas y completar una consulta de grupo de colección con su índice de Firestore.
 
-## 2.17 Buscador de usuarios en la navegación superior
+## 2.17 Eliminación de tweets propios
 **Fecha:** 2026-11-14
 **Herramienta y modelo:** Codex, GPT-6
-**Solicitud del estudiante:** Mover el buscador de usuarios desde la página Seguidos a la parte superior para acceder desde las demás páginas.
-**Asistencia recibida:** Se agregó un formulario de búsqueda de nombre de usuario a la navegación autenticada. Al enviar un nombre, con o sin `@`, la aplicación abre la ruta del perfil; la página Seguidos queda dedicada a mostrar las cuentas seguidas y sus acciones. Se actualizó la descripción de estas funciones en el README.
-**Archivos modificados:** `src/App.jsx`, `src/pages/FollowingPage.jsx`, `README.md` y `BITACORA.md`.
-**Validación manual:** Pendiente de que Oscar busque un usuario desde Inicio, Feed y Seguidos y confirme que llega a su perfil.
+**Solicitud del estudiante:** Agregar una opción funcional para eliminar un tweet propio y quitarlo de las publicaciones y feeds de todos los usuarios.
+
+**Asistencia recibida:** Se añadió un botón de eliminación visible solo en las publicaciones del usuario autenticado, con confirmación antes de borrar y mensajes de error si Firestore rechaza la operación. Las reglas de Firestore permiten borrar un tweet únicamente cuando su `authorId` coincide con el UID autenticado y mantienen bloqueadas las modificaciones del contenido. Las vistas que escuchan los tweets en tiempo real reflejan la eliminación automáticamente.
+
+**Archivos modificados:** `src/components/TweetCard.jsx`, `firestore.rules`, `README.md` y `BITACORA.md`.
+
+**Validación manual:** Pendiente de publicar las reglas en Firebase y confirmar con dos cuentas que el autor puede borrar su tweet, otro usuario no ve el botón y el tweet desaparece del feed y perfil después del borrado.
+
+## 2.18 Búsqueda global de usuarios
+**Fecha:** 2026-11-14
+**Herramienta y modelo:** Codex, GPT-6
+**Solicitud del estudiante:** Mover el buscador de usuarios desde la página «Seguidos» a la parte superior de la aplicación.
+
+**Asistencia recibida:** Se agregó una búsqueda persistente en la barra superior para localizar perfiles por nombre de usuario, mostrar el resultado, abrir su perfil y seguir o dejar de seguir sin salir de la página actual. La página «Seguidos» ahora se concentra en listar las cuentas seguidas.
+
+**Archivos modificados:** `src/components/UserSearch.jsx`, `src/App.jsx`, `src/index.css`, `src/pages/FollowingPage.jsx`, `README.md` y `BITACORA.md`.
+
+**Validación manual:** Pendiente de buscar un usuario desde la barra superior, abrir su perfil y comprobar las acciones de seguimiento con dos cuentas.

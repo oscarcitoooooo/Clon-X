@@ -62,13 +62,10 @@ async function ensureGoogleProfile(firebaseUser) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(firebaseAuth));
 
   useEffect(() => {
-    if (!firebaseAuth) {
-      setLoading(false);
-      return undefined;
-    }
+    if (!firebaseAuth) return undefined;
 
     return onAuthStateChanged(firebaseAuth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -130,6 +127,8 @@ export function AuthProvider({ children }) {
   );
 }
 
+// The hook shares the auth context with the provider exported by this module.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
 

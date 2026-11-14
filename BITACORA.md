@@ -117,3 +117,15 @@ Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, org
 **Nota de migración:** Los perfiles que ya tenían relaciones antes de guardar contadores deben inicializar una sola vez `followersCount` y `followingCount` con los totales reales desde Firebase Console; el cliente no puede recalcularlos leyendo relaciones ajenas.
 
 **Validacion manual:** Pendiente de prueba con dos cuentas autenticadas y aprobacion del equipo.
+
+## 2.16 Requisitos finales de Firestore y perfiles
+**Fecha:** 2026-11-14
+**Herramienta y modelo:** Codex, GPT-6
+**Solicitud del estudiante:** Completar los requisitos finales del proyecto: filtrar el feed por relaciones, paginar listas de perfiles, permitir seguir desde seguidores, proteger las relaciones y el correo privado, actualizar la documentación y verificar el proyecto.
+
+**Asistencia recibida:** Se conectó el feed en tiempo real a los tweets del usuario autenticado, sus seguidores y las cuentas que sigue, ordenados del más reciente al más antiguo y paginados de 10 en 10. Se añadieron pestañas de seguidores y seguidos en perfiles, ordenadas por nombre y paginadas, con acciones para seguir o dejar de seguir. Las acciones siguen usando transacciones que actualizan la relación y ambos contadores. Se ajustaron las reglas para permitir lectura autenticada de listas públicas y conservar las escrituras limitadas al propietario de la relación y la lectura de correo privado limitada a su dueño. Se actualizó este registro y el README con las instrucciones de revisión final.
+
+**Archivos modificados:** `src/pages/FeedPage.jsx`, `src/pages/FollowersPage.jsx`, `src/pages/UserTweetsPage.jsx`, `src/components/UserCard.jsx`, `src/components/ProfileRelationshipLists.jsx`, `firestore.rules`, `README.md` y `BITACORA.md`.
+
+**Verificación automatizada:** `npm.cmd run lint` finalizó sin errores y `npm.cmd run build` completó correctamente. Vite mostró únicamente el aviso de que el archivo JavaScript principal supera 500 kB minificado.
+**Validación manual con dos cuentas:** Pendiente de que Oscar y Yoseth revisen seguimiento, contadores, feed filtrado, listas, paginación y privacidad en Firebase. La revisión requiere publicar las reglas actualizadas y completar una consulta de grupo de colección con su índice de Firestore.

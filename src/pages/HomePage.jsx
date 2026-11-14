@@ -19,12 +19,7 @@ function HomePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!user?.uid || !firestoreDb) {
-      setIsLoadingTweets(false);
-      return undefined;
-    }
-
-    setProfile(null);
+    if (!user?.uid || !firestoreDb) return undefined;
 
     const profileRef = doc(firestoreDb, "users", user.uid);
     const profileUnsubscribe = onSnapshot(
@@ -83,6 +78,7 @@ function HomePage() {
   const fullName =
     profile?.fullName ?? user?.displayName ?? emailUsername ?? "Usuario";
   const username = profile?.username ?? emailUsername ?? "usuario";
+  const displayLoading = Boolean(user?.uid && firestoreDb && isLoadingTweets);
   return (
     <>
       <section className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -143,7 +139,7 @@ function HomePage() {
 
         {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
-        {isLoadingTweets && (
+        {displayLoading && (
           <div className="text-center py-4" role="status">
             <span
               className="spinner-border spinner-border-sm me-2"
@@ -153,7 +149,7 @@ function HomePage() {
           </div>
         )}
 
-        {!isLoadingTweets && !error && recentTweets.length === 0 && (
+        {!displayLoading && !error && recentTweets.length === 0 && (
           <div className="alert alert-light border" role="status">
             Todavía no has publicado. Comparte tu primera idea.
           </div>

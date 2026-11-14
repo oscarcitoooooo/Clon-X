@@ -186,9 +186,9 @@ service cloud.firestore {
     }
 
     match /follows/{followerId}/following/{followedId} {
-      // A user can inspect their own following list and incoming relationships.
-      allow read: if owns(followerId)
-        || (signedIn() && resource.data.followedId == request.auth.uid);
+      // Signed-in users may view public profile relationship lists. Writes
+      // remain restricted to the owner of the outgoing relationship path.
+      allow read: if signedIn();
 
       allow create: if owns(followerId)
         && followerId != followedId
@@ -234,10 +234,9 @@ service cloud.firestore {
         ).data.followersCount - 1;
     }
 
-    // Collection-group queries must filter followedId to the signed-in user.
+    // Collection-group reads power paginated follower lists on public profiles.
     match /{path=**}/following/{followedId} {
-      allow read: if signedIn()
-        && resource.data.followedId == request.auth.uid;
+      allow read: if signedIn();
     }
 
     // Private transaction marker used to prove a counter update corresponds

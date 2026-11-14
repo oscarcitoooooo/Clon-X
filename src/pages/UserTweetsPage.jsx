@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import Pagination, { PAGE_SIZE } from "../components/Pagination";
+import ProfileRelationshipLists from "../components/ProfileRelationshipLists";
 import TweetCard from "../components/TweetCard";
 import { firestoreDb } from "../firebase";
 import { updateFollowRelationship } from "../data/followService";
@@ -17,10 +18,12 @@ import { useAuth } from "./LoginPage";
 function UserTweetsPage() {
   const { username = "" } = useParams();
   const { user: signedInUser } = useAuth();
+  const requestedUsername = username.trim().replace(/^@/, "").toLowerCase();
   const [currentPage, setCurrentPage] = useState(1);
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("loading");
   const [profileError, setProfileError] = useState("");
+  const [loadedUsername, setLoadedUsername] = useState("");
   const [userTweets, setUserTweets] = useState([]);
   const [tweetsStatus, setTweetsStatus] = useState("loading");
   const [isFollowing, setIsFollowing] = useState(false);
@@ -28,35 +31,21 @@ function UserTweetsPage() {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
-    if (!firestoreDb) {
-      setProfileStatus("error");
-      setProfileError("Firebase no está configurado.");
-      return undefined;
-    }
+    if (!firestoreDb) return undefined;
 
     let isActive = true;
     let unsubscribeProfile;
     let unsubscribeTweets;
     let unsubscribeFollow;
-    setProfile(null);
-    setUserTweets([]);
-    setIsFollowing(false);
-    setCurrentPage(1);
-    setProfileStatus("loading");
-    setTweetsStatus("loading");
-    setProfileError("");
-    setFollowStatus("");
-    setIsFollowLoading(false);
-
     async function loadProfile() {
       try {
-        const usernameLower = username.trim().replace(/^@/, "").toLowerCase();
         const usernameSnapshot = await getDoc(
-          doc(firestoreDb, "usernameIndex", usernameLower),
+          doc(firestoreDb, "usernameIndex", requestedUsername),
         );
 
         if (!isActive) return;
         if (!usernameSnapshot.exists()) {
+          setLoadedUsername(requestedUsername);
           setProfileStatus("not-found");
           setTweetsStatus("ready");
           return;
@@ -68,6 +57,7 @@ function UserTweetsPage() {
           userProfileRef,
           (profileSnapshot) => {
             if (!isActive) return;
+            setLoadedUsername(requestedUsername);
             if (!profileSnapshot.exists()) {
               setProfileStatus("not-found");
               setProfile(null);
@@ -78,6 +68,7 @@ function UserTweetsPage() {
           },
           (profileError) => {
             if (!isActive) return;
+            setLoadedUsername(requestedUsername);
             setProfileStatus("error");
             setProfileError(
               profileError.code === "permission-denied"
@@ -143,6 +134,7 @@ function UserTweetsPage() {
         }
       } catch (error) {
         if (!isActive) return;
+        setLoadedUsername(requestedUsername);
         setProfileStatus("error");
         setProfileError(
           error.code === "permission-denied"
@@ -161,7 +153,7 @@ function UserTweetsPage() {
       unsubscribeTweets?.();
       unsubscribeFollow?.();
     };
-  }, [username, signedInUser?.uid]);
+  }, [requestedUsername, signedInUser?.uid]);
 
   async function toggleFollow() {
     if (!profile || !signedInUser?.uid || !firestoreDb || isFollowLoading) return;
@@ -191,10 +183,21 @@ function UserTweetsPage() {
   }
 
   const isSelf = profile?.id === signedInUser?.uid;
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const maxPage = Math.max(1, Math.ceil(userTweets.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, maxPage);
+  const startIndex = (safeCurrentPage - 1) * PAGE_SIZE;
   const visibleTweets = userTweets.slice(startIndex, startIndex + PAGE_SIZE);
+  const isProfileLoading = profileStatus === "loading" || loadedUsername !== requestedUsername;
 
-  if (profileStatus === "loading") {
+  if (!firestoreDb) {
+    return (
+      <div className="alert alert-danger" role="alert">
+        Firebase no está configurado. <Link to="/feed">Volver al feed</Link>
+      </div>
+    );
+  }
+
+  if (isProfileLoading) {
     return (
       <div className="text-center py-5" role="status">
         <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />
@@ -252,6 +255,12 @@ function UserTweetsPage() {
         </div>
       </div>
 
+      <ProfileRelationshipLists
+        key={profile.id}
+        profileId={profile.id}
+        signedInUserId={signedInUser?.uid}
+      />
+
       <h2 className="h5 mb-3">Publicaciones</h2>
 
       {tweetsStatus === "loading" && (
@@ -278,7 +287,7 @@ function UserTweetsPage() {
       ))}
 
       <Pagination
-        currentPage={currentPage}
+        currentPage={safeCurrentPage}
         totalItems={userTweets.length}
         onPageChange={setCurrentPage}
       />

@@ -1,8 +1,129 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  updateProfile,
+} from "firebase/auth";
+import {
+  doc,
+  getDoc,
+  serverTimestamp,
+  writeBatch,
+} from "firebase/firestore";
+import { Link, useNavigate } from "react-router";
+import { firebaseAuth, firestoreDb } from "../firebase";
+
+async function hashEmail(email) {
+  const bytes = new TextEncoder().encode(email);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function registrationErrorMessage(error) {
+  if (error.message === "USERNAME_TAKEN") {
+    return "Ese nombre de usuario ya está ocupado.";
+  }
+  if (error.code === "auth/email-already-in-use") {
+    return "Ese nombre de usuario ya tiene una cuenta.";
+  }
+  if (error.code === "auth/weak-password") {
+    return "La contraseña debe tener al menos 6 caracteres.";
+  }
+  if (error.code === "permission-denied") {
+    return "Ese correo ya está registrado, o las reglas de Firestore no permiten guardar el perfil.";
+  }
+
+  return error.message || "No se pudo crear la cuenta. Inténtalo de nuevo.";
+}
 
 function RegisterPage() {
-  function handleSubmit(event) {
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleSubmit(event) {
     event.preventDefault();
+    setError("");
+
+    if (!firebaseAuth || !firestoreDb) {
+      setError("Firebase no está configurado. Revisa el archivo .env.local.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    const fullName = String(formData.get("fullName") ?? "").trim();
+    const username = String(formData.get("username") ?? "").trim();
+    const usernameLower = username.replace(/^@/, "").toLowerCase();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const password = String(formData.get("password") ?? "");
+
+    if (!/^[a-z0-9_]{3,20}$/.test(usernameLower)) {
+      setError("El usuario debe tener entre 3 y 20 caracteres: letras, números o guion bajo.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    let createdUser = null;
+
+    try {
+      const authEmail = `${usernameLower}@clonx.app`;
+      const credential = await createUserWithEmailAndPassword(
+        firebaseAuth,
+        authEmail,
+        password,
+      );
+      createdUser = credential.user;
+
+      await updateProfile(createdUser, { displayName: fullName });
+
+      const usernameRef = doc(firestoreDb, "usernameIndex", usernameLower);
+      const existingUsername = await getDoc(usernameRef);
+
+      if (existingUsername.exists()) {
+        throw new Error("USERNAME_TAKEN");
+      }
+
+      const emailHash = await hashEmail(email);
+      const batch = writeBatch(firestoreDb);
+
+      batch.set(doc(firestoreDb, "users", createdUser.uid), {
+        fullName,
+        username: usernameLower,
+        usernameLower,
+        photoURL: "",
+        followersCount: 0,
+        followingCount: 0,
+        createdAt: serverTimestamp(),
+      });
+
+      batch.set(doc(firestoreDb, "privateUsers", createdUser.uid), {
+        email,
+        emailHash,
+      });
+
+      batch.set(usernameRef, { uid: createdUser.uid });
+      batch.set(doc(firestoreDb, "emailIndex", emailHash), {
+        uid: createdUser.uid,
+      });
+
+      await batch.commit();
+      navigate("/home", { replace: true });
+    } catch (registrationError) {
+      if (createdUser) {
+        try {
+          await deleteUser(createdUser);
+        } catch {
+          // Keep the original registration error for the user.
+        }
+      }
+
+      setError(registrationErrorMessage(registrationError));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -21,6 +142,12 @@ function RegisterPage() {
                 </p>
               </div>
 
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label className="form-label" htmlFor="fullName">
@@ -33,6 +160,7 @@ function RegisterPage() {
                     type="text"
                     autoComplete="name"
                     placeholder="Escribe tu nombre completo"
+                    maxLength={80}
                     required
                   />
                 </div>
@@ -48,8 +176,14 @@ function RegisterPage() {
                     type="text"
                     autoComplete="username"
                     placeholder="Por ejemplo, oscar"
+                    minLength={3}
+                    maxLength={20}
+                    pattern="[A-Za-z0-9_]+"
                     required
                   />
+                  <div className="form-text">
+                    Usa entre 3 y 20 letras, números o guion bajo.
+                  </div>
                 </div>
 
                 <div className="mb-3">
@@ -78,12 +212,17 @@ function RegisterPage() {
                     type="password"
                     autoComplete="new-password"
                     placeholder="Crea una contraseña"
+                    minLength={6}
                     required
                   />
                 </div>
 
-                <button className="btn btn-primary w-100" type="submit">
-                  Registrarse
+                <button
+                  className="btn btn-primary w-100"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Creando cuenta..." : "Registrarse"}
                 </button>
               </form>
 

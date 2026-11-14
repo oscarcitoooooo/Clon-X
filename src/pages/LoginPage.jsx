@@ -1,46 +1,19 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { initializeApp } from "firebase/app";
 import {
-  getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from "firebase/auth";
 import { Link, Navigate, useNavigate } from "react-router";
-import { users } from "../data/mockData";
+import { firebaseAuth } from "../firebase";
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = "clon-x-demo-user";
-const DEMO_USERNAME = "oscar";
-const DEMO_PASSWORD = "clonx123";
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
-const firebaseApp = hasFirebaseConfig ? initializeApp(firebaseConfig) : null;
-const firebaseAuth = firebaseApp ? getAuth(firebaseApp) : null;
 const googleProvider = new GoogleAuthProvider();
 
-function getStoredUser() {
-  try {
-    const storedValue = localStorage.getItem(STORAGE_KEY);
-    if (!storedValue) return null;
-
-    const { userId } = JSON.parse(storedValue);
-    return users.find((user) => user.id === userId) ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getStoredUser);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,27 +23,29 @@ export function AuthProvider({ children }) {
     }
 
     return onAuthStateChanged(firebaseAuth, (firebaseUser) => {
-      setUser(firebaseUser ?? getStoredUser());
+      setUser(firebaseUser);
       setLoading(false);
     });
   }, []);
 
-  function login(username, password) {
+  async function login(username, password) {
     const normalizedUsername = String(username ?? "")
       .trim()
       .replace(/^@/, "")
       .toLowerCase();
 
-    if (normalizedUsername !== DEMO_USERNAME || password !== DEMO_PASSWORD) {
-      return false;
+    if (!firebaseAuth) {
+      throw new Error("Firebase no está configurado. Revisa el archivo .env.local.");
     }
 
-    const demoUser = users.find((candidate) => candidate.username === DEMO_USERNAME);
-    if (!demoUser) return false;
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ userId: demoUser.id }));
-    setUser(demoUser);
-    return true;
+    const authEmail = `${normalizedUsername}@clonx.app`;
+    const credential = await signInWithEmailAndPassword(
+      firebaseAuth,
+      authEmail,
+      password,
+    );
+    setUser(credential.user);
+    return credential.user;
   }
 
   async function loginWithGoogle() {
@@ -79,13 +54,11 @@ export function AuthProvider({ children }) {
     }
 
     const result = await signInWithPopup(firebaseAuth, googleProvider);
-    localStorage.removeItem(STORAGE_KEY);
     setUser(result.user);
     return result.user;
   }
 
   async function logout() {
-    localStorage.removeItem(STORAGE_KEY);
     if (firebaseAuth) await signOut(firebaseAuth);
     setUser(null);
   }
@@ -116,8 +89,19 @@ function getGoogleErrorMessage(error) {
   return error.message || "No se pudo iniciar sesión con Google. Inténtalo de nuevo.";
 }
 
+function getPasswordErrorMessage(error) {
+  if (["auth/invalid-credential", "auth/user-not-found", "auth/wrong-password"].includes(error.code)) {
+    return "Nombre de usuario o contraseña incorrectos.";
+  }
+  if (error.code === "auth/too-many-requests") {
+    return "Hubo demasiados intentos. Espera un momento e inténtalo de nuevo.";
+  }
+  return error.message || "No se pudo iniciar sesión. Inténtalo de nuevo.";
+}
+
 function LoginPage() {
   const [error, setError] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { user, loading, login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
@@ -132,18 +116,20 @@ function LoginPage() {
   }
   if (user) return <Navigate to="/home" replace />;
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const isLoggedIn = login(formData.get("username"), formData.get("password"));
-
-    if (!isLoggedIn) {
-      setError("Usuario o contraseña incorrectos.");
-      return;
-    }
-
     setError("");
-    navigate("/home", { replace: true });
+    setPasswordLoading(true);
+    const formData = new FormData(event.currentTarget);
+
+    try {
+      await login(formData.get("username"), formData.get("password"));
+      navigate("/home", { replace: true });
+    } catch (signInError) {
+      setError(getPasswordErrorMessage(signInError));
+    } finally {
+      setPasswordLoading(false);
+    }
   }
 
   async function handleGoogleSignIn() {
@@ -200,7 +186,13 @@ function LoginPage() {
                   />
                 </div>
 
-                <button className="btn btn-primary w-100" type="submit">Iniciar sesión</button>
+                <button
+                  className="btn btn-primary w-100"
+                  type="submit"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+                </button>
               </form>
 
               <div className="d-flex align-items-center gap-3 my-4">

@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn();
+
+      allow create: if owns(userId)
+        && request.resource.data.keys().hasAll([
+          'fullName',
+          'username',
+          'usernameLower',
+          'photoURL',
+          'followersCount',
+          'followingCount',
+          'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'fullName',
+          'username',
+          'usernameLower',
+          'photoURL',
+          'followersCount',
+          'followingCount',
+          'createdAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.username is string
+        && request.resource.data.usernameLower is string
+        && request.resource.data.photoURL is string
+        && request.resource.data.followersCount is number
+        && request.resource.data.followingCount is number
+        && request.resource.data.createdAt is timestamp
+        && getAfter(
+          /databases/$(database)/documents/usernameIndex/$(request.resource.data.usernameLower)
+        ).data.uid == userId;
+
+      allow update: if owns(userId)
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly(['fullName', 'photoURL']);
+
+      allow delete: if false;
+    }
+
+    match /privateUsers/{userId} {
+      allow read: if owns(userId);
+
+      allow create: if owns(userId)
+        && request.resource.data.keys().hasAll(['email', 'emailHash'])
+        && request.resource.data.keys().hasOnly(['email', 'emailHash'])
+        && request.resource.data.email is string
+        && request.resource.data.emailHash is string
+        && getAfter(
+          /databases/$(database)/documents/emailIndex/$(request.resource.data.emailHash)
+        ).data.uid == userId;
+
+      allow update, delete: if false;
+    }
+
+    match /usernameIndex/{usernameLower} {
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.usernameLower == usernameLower;
+
+      allow update, delete: if false;
+    }
+
+    match /emailIndex/{emailHash} {
+      allow read: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/privateUsers/$(request.auth.uid)
+        ).data.emailHash == emailHash;
+
+      allow update, delete: if false;
+    }
+  }
+}

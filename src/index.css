@@ -41,3 +41,24 @@ body {
 .clonx-brand:hover .clonx-brand-mark {
   background: #0d6efd;
 }
+.user-search {
+  max-width: 360px;
+  min-width: 220px;
+  z-index: 20;
+}
+
+.user-search-results {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: min(380px, 90vw);
+  z-index: 1050;
+}
+
+@media (max-width: 575.98px) {
+  .user-search {
+    order: 3;
+    max-width: none;
+    min-width: 100%;
+  }
+}

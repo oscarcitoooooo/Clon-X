@@ -15,6 +15,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage, { AuthProvider, useAuth } from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UserTweetsPage from "./pages/UserTweetsPage";
+import UserSearch from "./components/UserSearch";
 
 function PlaceholderPage({ title, description }) {
   return (
@@ -82,6 +83,8 @@ function AppHeader() {
               <NavLink className={navLinkClass} to="/following">Seguidos</NavLink>
               <NavLink className={navLinkClass} to="/followers">Seguidores</NavLink>
             </nav>
+
+            <UserSearch />
 
             <div className="d-flex align-items-center gap-3">
               <span className="small fw-semibold">@{username}</span>

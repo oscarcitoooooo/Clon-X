@@ -120,5 +120,31 @@ service cloud.firestore {
 
       allow update, delete: if false;
     }
+
+    match /follows/{followerId}/following/{followedId} {
+      allow read: if owns(followerId);
+
+      allow create: if owns(followerId)
+        && followerId != followedId
+        && exists(
+          /databases/$(database)/documents/users/$(followedId)
+        )
+        && request.resource.data.keys().hasAll([
+          'followerId',
+          'followedId',
+          'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'followerId',
+          'followedId',
+          'createdAt'
+        ])
+        && request.resource.data.followerId == followerId
+        && request.resource.data.followedId == followedId
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if false;
+      allow delete: if owns(followerId);
+    }
   }
 }

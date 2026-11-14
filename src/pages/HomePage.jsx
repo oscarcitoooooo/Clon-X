@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   collection,
-  collectionGroup,
   doc,
   onSnapshot,
   query,
@@ -15,9 +14,6 @@ import { useAuth } from "./LoginPage";
 function HomePage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [followersCount, setFollowersCount] = useState(null);
-  const [followingCount, setFollowingCount] = useState(null);
-  const [relationshipError, setRelationshipError] = useState("");
   const [recentTweets, setRecentTweets] = useState([]);
   const [isLoadingTweets, setIsLoadingTweets] = useState(true);
   const [error, setError] = useState("");
@@ -28,9 +24,7 @@ function HomePage() {
       return undefined;
     }
 
-    setFollowersCount(null);
-    setFollowingCount(null);
-    setRelationshipError("");
+    setProfile(null);
 
     const profileRef = doc(firestoreDb, "users", user.uid);
     const profileUnsubscribe = onSnapshot(
@@ -41,22 +35,6 @@ function HomePage() {
       () => {
         setError("No se pudo cargar tu perfil.");
       },
-    );
-
-    const followingUnsubscribe = onSnapshot(
-      collection(firestoreDb, "follows", user.uid, "following"),
-      (snapshot) => setFollowingCount(snapshot.size),
-      () => setRelationshipError("No se pudo cargar el contador de usuarios seguidos."),
-    );
-
-    const followersQuery = query(
-      collectionGroup(firestoreDb, "following"),
-      where("followedId", "==", user.uid),
-    );
-    const followersUnsubscribe = onSnapshot(
-      followersQuery,
-      (snapshot) => setFollowersCount(snapshot.size),
-      () => setRelationshipError("No se pudo cargar el contador de seguidores."),
     );
 
     const userTweetsQuery = query(
@@ -97,8 +75,6 @@ function HomePage() {
 
     return () => {
       profileUnsubscribe();
-      followingUnsubscribe();
-      followersUnsubscribe();
       tweetsUnsubscribe();
     };
   }, [user?.uid]);
@@ -129,7 +105,9 @@ function HomePage() {
             <div className="card-body p-4">
               <h2 className="h6 text-secondary">Seguidores</h2>
               <p className="display-6 fw-bold mb-3">
-                {followersCount === null ? "…" : followersCount.toLocaleString("es-CO")}
+                {typeof profile?.followersCount !== "number"
+                  ? "…"
+                  : profile.followersCount.toLocaleString("es-CO")}
               </p>
               <Link className="text-decoration-none" to="/followers">
                 Ver seguidores
@@ -143,7 +121,9 @@ function HomePage() {
             <div className="card-body p-4">
               <h2 className="h6 text-secondary">Siguiendo</h2>
               <p className="display-6 fw-bold mb-3">
-                {followingCount === null ? "…" : followingCount.toLocaleString("es-CO")}
+                {typeof profile?.followingCount !== "number"
+                  ? "…"
+                  : profile.followingCount.toLocaleString("es-CO")}
               </p>
               <Link className="text-decoration-none" to="/following">
                 Ver usuarios seguidos
@@ -152,12 +132,6 @@ function HomePage() {
           </section>
         </div>
       </div>
-
-      {relationshipError && (
-        <div className="alert alert-warning" role="status">
-          {relationshipError}
-        </div>
-      )}
 
       <section>
         <div className="d-flex justify-content-between align-items-center mb-3">

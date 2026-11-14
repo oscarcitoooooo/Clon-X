@@ -2,19 +2,16 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import {
   collection,
-  collectionGroup,
-  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 import Pagination, { PAGE_SIZE } from "../components/Pagination";
 import TweetCard from "../components/TweetCard";
 import { firestoreDb } from "../firebase";
+import { updateFollowRelationship } from "../data/followService";
 import { useAuth } from "./LoginPage";
 
 function UserTweetsPage() {
@@ -24,8 +21,6 @@ function UserTweetsPage() {
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("loading");
   const [profileError, setProfileError] = useState("");
-  const [followersCount, setFollowersCount] = useState(null);
-  const [followingCount, setFollowingCount] = useState(null);
   const [userTweets, setUserTweets] = useState([]);
   const [tweetsStatus, setTweetsStatus] = useState("loading");
   const [isFollowing, setIsFollowing] = useState(false);
@@ -40,13 +35,10 @@ function UserTweetsPage() {
     }
 
     let isActive = true;
+    let unsubscribeProfile;
     let unsubscribeTweets;
     let unsubscribeFollow;
-    let unsubscribeFollowing;
-    let unsubscribeFollowers;
     setProfile(null);
-    setFollowersCount(null);
-    setFollowingCount(null);
     setUserTweets([]);
     setIsFollowing(false);
     setCurrentPage(1);
@@ -71,57 +63,29 @@ function UserTweetsPage() {
         }
 
         const userId = usernameSnapshot.data().uid;
-        const profileSnapshot = await getDoc(doc(firestoreDb, "users", userId));
-
-        if (!isActive) return;
-        if (!profileSnapshot.exists()) {
-          setProfileStatus("not-found");
-          setTweetsStatus("ready");
-          return;
-        }
-
-        const loadedProfile = { id: userId, ...profileSnapshot.data() };
-        setProfile(loadedProfile);
-        setProfileStatus("ready");
-
-        const profileFollowingQuery = collection(
-          firestoreDb,
-          "follows",
-          userId,
-          "following",
-        );
-        unsubscribeFollowing = onSnapshot(
-          profileFollowingQuery,
-          (snapshot) => {
-            if (isActive) {
-              setFollowingCount(snapshot.size);
+        const userProfileRef = doc(firestoreDb, "users", userId);
+        unsubscribeProfile = onSnapshot(
+          userProfileRef,
+          (profileSnapshot) => {
+            if (!isActive) return;
+            if (!profileSnapshot.exists()) {
+              setProfileStatus("not-found");
+              setProfile(null);
+              return;
             }
+            setProfile({ id: userId, ...profileSnapshot.data() });
+            setProfileStatus("ready");
           },
-          () => {
-            if (isActive) {
-              setFollowStatus("No se pudo actualizar el contador de usuarios seguidos.");
-            }
+          (profileError) => {
+            if (!isActive) return;
+            setProfileStatus("error");
+            setProfileError(
+              profileError.code === "permission-denied"
+                ? "Firestore no permitió cargar este perfil. Revisa las reglas publicadas."
+                : "No se pudo cargar el perfil. Inténtalo de nuevo.",
+            );
           },
         );
-
-        const profileFollowersQuery = query(
-          collectionGroup(firestoreDb, "following"),
-          where("followedId", "==", userId),
-        );
-        unsubscribeFollowers = onSnapshot(
-          profileFollowersQuery,
-          (snapshot) => {
-            if (isActive) {
-              setFollowersCount(snapshot.size);
-            }
-          },
-          () => {
-            if (isActive) {
-              setFollowStatus("No se pudo actualizar el contador de seguidores.");
-            }
-          },
-        );
-
         const tweetsQuery = query(
           collection(firestoreDb, "tweets"),
           where("authorId", "==", userId),
@@ -193,10 +157,9 @@ function UserTweetsPage() {
 
     return () => {
       isActive = false;
+      unsubscribeProfile?.();
       unsubscribeTweets?.();
       unsubscribeFollow?.();
-      unsubscribeFollowing?.();
-      unsubscribeFollowers?.();
     };
   }, [username, signedInUser?.uid]);
 
@@ -205,29 +168,22 @@ function UserTweetsPage() {
 
     setIsFollowLoading(true);
     setFollowStatus("");
-    const followRef = doc(
-      firestoreDb,
-      "follows",
-      signedInUser.uid,
-      "following",
-      profile.id,
-    );
-
     try {
-      if (isFollowing) {
-        await deleteDoc(followRef);
-      } else {
-        await setDoc(followRef, {
-          followerId: signedInUser.uid,
-          followedId: profile.id,
-          createdAt: serverTimestamp(),
-        });
-      }
+      await updateFollowRelationship(
+        firestoreDb,
+        signedInUser.uid,
+        profile.id,
+        !isFollowing,
+      );
     } catch (error) {
       setFollowStatus(
-        error.code === "permission-denied"
-          ? "Firestore no permitió cambiar el seguimiento. Revisa las reglas publicadas."
-          : "No se pudo actualizar el seguimiento. Inténtalo de nuevo.",
+        error.code === "profile-counts-invalid"
+          ? "Los contadores de estos perfiles aún no están sincronizados con sus relaciones actuales. Hay que inicializarlos en Firestore antes de cambiar el seguimiento."
+          : error.code === "profile-not-found"
+            ? "No encontramos uno de los perfiles en Firestore."
+            : error.code === "permission-denied"
+              ? "Firestore no permitió cambiar el seguimiento. Revisa las reglas publicadas."
+              : "No se pudo actualizar el seguimiento. Inténtalo de nuevo.",
       );
     } finally {
       setIsFollowLoading(false);
@@ -272,8 +228,8 @@ function UserTweetsPage() {
               <h1 className="h3 mb-1">{profile.fullName || profile.username}</h1>
               <p className="text-secondary mb-3">@{profile.username}</p>
               <div className="d-flex flex-wrap gap-4">
-                <span><strong>{followersCount === null ? "…" : followersCount}</strong> seguidores</span>
-                <span><strong>{followingCount === null ? "…" : followingCount}</strong> siguiendo</span>
+                <span><strong>{typeof profile.followersCount !== "number" ? "…" : profile.followersCount}</strong> seguidores</span>
+                <span><strong>{typeof profile.followingCount !== "number" ? "…" : profile.followingCount}</strong> siguiendo</span>
               </div>
             </div>
 

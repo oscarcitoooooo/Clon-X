@@ -10,6 +10,24 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function followOperationMatches(actorId, targetId, action) {
+      let operationPath = /databases/$(database)/documents/followOperations/$(actorId);
+      return existsAfter(operationPath)
+        && getAfter(operationPath).data.targetId == targetId
+        && getAfter(operationPath).data.action == action;
+    }
+
+    function followEdgeWillExist(actorId, targetId) {
+      return existsAfter(
+        /databases/$(database)/documents/follows/$(actorId)/following/$(targetId)
+      );
+    }
+
+    function followEdgeWillBeDeleted(actorId, targetId) {
+      let edgePath = /databases/$(database)/documents/follows/$(actorId)/following/$(targetId);
+      return exists(edgePath) && !existsAfter(edgePath);
+    }
+
     match /users/{userId} {
       allow read: if signedIn();
 
@@ -43,9 +61,56 @@ service cloud.firestore {
           /databases/$(database)/documents/usernameIndex/$(request.resource.data.usernameLower)
         ).data.uid == userId;
 
-      allow update: if owns(userId)
-        && request.resource.data.diff(resource.data)
-          .affectedKeys().hasOnly(['fullName', 'photoURL']);
+      // A profile owner may edit profile fields, or change a counter only as
+      // part of the matching atomic follow transaction.
+      allow update: if (
+        owns(userId) && (
+          request.resource.data.diff(resource.data)
+            .affectedKeys().hasOnly(['fullName', 'photoURL'])
+          || (
+            request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(['followingCount'])
+            && request.resource.data.followingCount is number
+            && request.resource.data.followingCount == resource.data.followingCount + 1
+            && followOperationMatches(userId, getAfter(
+              /databases/$(database)/documents/followOperations/$(userId)
+            ).data.targetId, 'follow')
+            && followEdgeWillExist(userId, getAfter(
+              /databases/$(database)/documents/followOperations/$(userId)
+            ).data.targetId)
+          )
+          || (
+            request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(['followingCount'])
+            && request.resource.data.followingCount is number
+            && request.resource.data.followingCount == resource.data.followingCount - 1
+            && followOperationMatches(userId, getAfter(
+              /databases/$(database)/documents/followOperations/$(userId)
+            ).data.targetId, 'unfollow')
+            && followEdgeWillBeDeleted(userId, getAfter(
+              /databases/$(database)/documents/followOperations/$(userId)
+            ).data.targetId)
+          )
+        )
+        || (
+          signedIn() && (
+            request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(['followersCount'])
+            && request.resource.data.followersCount is number
+            && request.resource.data.followersCount == resource.data.followersCount + 1
+            && followOperationMatches(request.auth.uid, userId, 'follow')
+            && followEdgeWillExist(request.auth.uid, userId)
+          )
+          || (
+            request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(['followersCount'])
+            && request.resource.data.followersCount is number
+            && request.resource.data.followersCount == resource.data.followersCount - 1
+            && followOperationMatches(request.auth.uid, userId, 'unfollow')
+            && followEdgeWillBeDeleted(request.auth.uid, userId)
+          )
+        )
+      );
 
       allow delete: if false;
     }
@@ -112,24 +177,22 @@ service cloud.firestore {
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 280
         && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.username
-          == get(
-            /databases/$(database)/documents/users/$(request.auth.uid)
-          ).data.username
+        && request.resource.data.username == get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.username
         && request.resource.data.createdAt == request.time;
 
       allow update, delete: if false;
     }
 
     match /follows/{followerId}/following/{followedId} {
-      // Follow relationships are visible to signed-in users for public lists and counters.
-      allow read: if signedIn();
+      // A user can inspect their own following list and incoming relationships.
+      allow read: if owns(followerId)
+        || (signedIn() && resource.data.followedId == request.auth.uid);
 
       allow create: if owns(followerId)
         && followerId != followedId
-        && exists(
-          /databases/$(database)/documents/users/$(followedId)
-        )
+        && exists(/databases/$(database)/documents/users/$(followedId))
         && request.resource.data.keys().hasAll([
           'followerId',
           'followedId',
@@ -142,15 +205,58 @@ service cloud.firestore {
         ])
         && request.resource.data.followerId == followerId
         && request.resource.data.followedId == followedId
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        && followOperationMatches(followerId, followedId, 'follow')
+        && getAfter(
+          /databases/$(database)/documents/users/$(followerId)
+        ).data.followingCount == get(
+          /databases/$(database)/documents/users/$(followerId)
+        ).data.followingCount + 1
+        && getAfter(
+          /databases/$(database)/documents/users/$(followedId)
+        ).data.followersCount == get(
+          /databases/$(database)/documents/users/$(followedId)
+        ).data.followersCount + 1;
 
       allow update: if false;
-      allow delete: if owns(followerId);
+
+      allow delete: if owns(followerId)
+        && followOperationMatches(followerId, followedId, 'unfollow')
+        && getAfter(
+          /databases/$(database)/documents/users/$(followerId)
+        ).data.followingCount == get(
+          /databases/$(database)/documents/users/$(followerId)
+        ).data.followingCount - 1
+        && getAfter(
+          /databases/$(database)/documents/users/$(followedId)
+        ).data.followersCount == get(
+          /databases/$(database)/documents/users/$(followedId)
+        ).data.followersCount - 1;
     }
 
-    // Required to authorize collectionGroup("following") queries for follower lists and counts.
+    // Collection-group queries must filter followedId to the signed-in user.
     match /{path=**}/following/{followedId} {
-      allow read: if signedIn();
+      allow read: if signedIn()
+        && resource.data.followedId == request.auth.uid;
+    }
+
+    // Private transaction marker used to prove a counter update corresponds
+    // to the signed-in user's follow/unfollow operation.
+    match /followOperations/{actorId} {
+      allow read: if owns(actorId);
+
+      allow create, update: if owns(actorId)
+        && request.resource.data.keys().hasAll(['targetId', 'action', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['targetId', 'action', 'createdAt'])
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId != actorId
+        && request.resource.data.action in ['follow', 'unfollow']
+        && request.resource.data.createdAt == request.time
+        && exists(
+          /databases/$(database)/documents/users/$(request.resource.data.targetId)
+        );
+
+      allow delete: if false;
     }
   }
 }

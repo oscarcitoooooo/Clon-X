@@ -110,8 +110,10 @@ Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, org
 
 **Resumen de la solicitud del estudiante:** Corregir los contadores para que reflejen inmediatamente las relaciones de seguimiento entre Oscar y Yoseth.
 
-**Asistencia recibida:** Se conectaron los contadores de Inicio y de los perfiles a listeners de Firestore sobre las relaciones `follows/{followerId}/following/{followedId}`. Las pantallas ahora muestran los valores al recibir la primera respuesta y se actualizan al seguir o dejar de seguir, sin recargar. Se ajustaron las reglas para permitir que usuarios autenticados consulten relaciones públicas y los contadores de perfiles, y se documentó ese comportamiento.
+**Asistencia recibida:** Se reemplazaron las consultas generales de relaciones por contadores guardados en el perfil público. Seguir y dejar de seguir ahora usa una transacción de Firestore que actualiza la relación y los dos contadores de forma atómica. Las reglas limitan la lectura a las relaciones salientes propias y a las entrantes dirigidas al usuario autenticado, y exigen que cada cambio de contador corresponda a una relación creada o eliminada en la misma transacción. Inicio y perfil escuchan el documento público para reflejar los contadores en tiempo real.
 
-**Archivos modificados:** `src/pages/HomePage.jsx`, `src/pages/UserTweetsPage.jsx`, `firestore.rules`, `README.md` y `BITACORA.md`.
+**Archivos modificados:** `src/data/followService.js`, `src/pages/FollowingPage.jsx`, `src/pages/HomePage.jsx`, `src/pages/UserTweetsPage.jsx`, `firestore.rules`, `README.md` y `BITACORA.md`.
+
+**Nota de migración:** Los perfiles que ya tenían relaciones antes de guardar contadores deben inicializar una sola vez `followersCount` y `followingCount` con los totales reales desde Firebase Console; el cliente no puede recalcularlos leyendo relaciones ajenas.
 
 **Validacion manual:** Pendiente de prueba con dos cuentas autenticadas y aprobacion del equipo.

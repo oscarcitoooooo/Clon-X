@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import {
   collection,
-  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
-  serverTimestamp,
-  setDoc,
 } from "firebase/firestore";
 import Pagination, { PAGE_SIZE } from "../components/Pagination";
 import { firestoreDb } from "../firebase";
+import { updateFollowRelationship } from "../data/followService";
 import { useAuth } from "./LoginPage";
 
 function RelationshipCard({
@@ -203,27 +201,25 @@ function FollowingPage() {
     }
 
     setPendingUserId(profile.id);
-    const followRef = doc(
-      firestoreDb,
-      "follows",
-      user.uid,
-      "following",
-      profile.id,
-    );
-
     try {
-      if (followingIds.has(profile.id)) {
-        await deleteDoc(followRef);
+      const shouldFollow = !followingIds.has(profile.id);
+      const changed = await updateFollowRelationship(
+        firestoreDb,
+        user.uid,
+        profile.id,
+        shouldFollow,
+      );
+
+      if (!changed) {
+        return;
+      }
+
+      if (!shouldFollow) {
         setFeedback({
           type: "success",
           text: `Dejaste de seguir a @${profile.username}.`,
         });
       } else {
-        await setDoc(followRef, {
-          followerId: user.uid,
-          followedId: profile.id,
-          createdAt: serverTimestamp(),
-        });
         setFeedback({
           type: "success",
           text: `Ahora sigues a @${profile.username}.`,
@@ -233,9 +229,13 @@ function FollowingPage() {
       setFeedback({
         type: "danger",
         text:
-          followError.code === "permission-denied"
-            ? "Firestore no permitió cambiar esta relación. Revisa las reglas publicadas."
-            : "No se pudo actualizar el seguimiento. Inténtalo de nuevo.",
+          followError.code === "profile-counts-invalid"
+            ? "Los contadores de estos perfiles aún no están sincronizados con sus relaciones actuales. Hay que inicializarlos en Firestore antes de cambiar el seguimiento."
+            : followError.code === "profile-not-found"
+              ? "No encontramos uno de los perfiles en Firestore."
+              : followError.code === "permission-denied"
+                ? "Firestore no permitió cambiar esta relación. Revisa las reglas publicadas."
+                : "No se pudo actualizar el seguimiento. Inténtalo de nuevo.",
       });
     } finally {
       setPendingUserId("");

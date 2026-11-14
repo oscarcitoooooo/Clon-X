@@ -48,7 +48,7 @@ Se conecto el boton de Google con Firebase Authentication mediante el SDK web. L
 - Vite
 
 ## 4. Estado del proyecto
-La autenticacion con Google mediante Firebase esta conectada y validada manualmente. Otras funciones del proyecto siguen usando datos de prueba y pueden ampliarse en los siguientes avances.
+La autenticacion con Google y con usuario y contrasena esta conectada. La publicacion de tweets, el feed y las publicaciones recientes de Inicio usan Firestore y se validaron manualmente. La busqueda y el seguimiento de usuarios por nombre de usuario se implementan en el avance 2.13; las paginas de seguidores y algunos perfiles aun conservan datos de prueba.
 
 ## 5. Conclusion
 Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, organizar el codigo e integrar autenticacion con Firebase. La bitacora registra tambien la asistencia de IA utilizada durante el desarrollo.
@@ -67,12 +67,30 @@ Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, org
 **Resumen de la respuesta:** Se actualizo el README para reflejar la autenticacion y el estado de Milestone 2, se agrego una plantilla de variables locales para Firebase y se versionaron las reglas actuales de Firestore. La plantilla no contiene credenciales reales.  
 **Archivos creados o modificados:** `README.md`, `.env.example`, `firestore.rules`.
 
-## Firestore tweet publishing
+## 2.12 Publicacion de tweets en tiempo real con Firestore
 
-Authenticated users can publish tweets to the `tweets` collection in Cloud Firestore. Each document stores the content, author ID, username, and server creation timestamp.
+**Fecha:** 2026-11-13
 
-The application validates that a tweet contains text and does not exceed 280 characters. Firestore rules require an authenticated user, verify that the author ID and username match the signed-in user's profile, and prevent tweet updates or deletion.
+**Herramienta y modelo:** Codex, GPT-6
 
-The feed listens for Firestore changes in real time and displays tweets from newest to oldest. The home page also listens for changes and displays the user's three latest tweets. When a Google user signs in without a Firestore profile, the application creates a public profile with a generated username.
+**Resumen de la solicitud del estudiante:** Conectar el formulario de publicacion, el feed y la pagina de inicio con Firestore; resolver el aviso que aparecia cuando una cuenta de Google no tenia perfil guardado.
 
-Firestore security rules are maintained in `firestore.rules`. The local Firebase configuration belongs in `.env.local`; do not commit that file.
+**Asistencia recibida:** Se agregaron reglas para validar contenido y autor en la coleccion `tweets`; se conecto el formulario para guardar el contenido, UID, nombre de usuario y fecha del servidor; el feed y la pagina de inicio se conectaron a actualizaciones en tiempo real. Se agrego la creacion de un perfil publico para cuentas de Google que aun no tenian uno.
+
+**Archivos modificados:** `firestore.rules`, `src/pages/ComposePage.jsx`, `src/pages/FeedPage.jsx`, `src/pages/HomePage.jsx` y `src/pages/LoginPage.jsx`.
+
+**Validacion manual del equipo:** Se inicio sesion con Google, se publico un tweet y se confirmo que aparecio en el feed y en la pagina de inicio.
+
+## 2.13 Busqueda y seguimiento de usuarios por nombre
+
+**Fecha:** 2026-11-13
+
+**Herramienta y modelo:** Codex, GPT-6
+
+**Resumen de la solicitud del estudiante:** Definir la siguiente tarea del Milestone 2 para que Oscar implemente la busqueda de usuarios y el seguimiento con Firestore.
+
+**Asistencia recibida:** Se definio el issue y se conecto la pagina de usuarios seguidos con la busqueda normalizada por nombre de usuario, la creacion y eliminacion de relaciones en Firestore, y reglas que protegen las relaciones del usuario autenticado. Se actualizaron el README y esta bitacora.
+
+**Archivos modificados:** `firestore.rules`, `src/pages/FollowingPage.jsx`, `README.md` y `BITACORA.md`.
+
+**Validacion manual:** Pendiente de revision y prueba por Oscar.

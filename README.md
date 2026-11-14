@@ -90,7 +90,7 @@ Open the local URL printed in the terminal.
 ```text
 src/
   components/  Reusable tweet, user, and pagination components
-  data/        Mock users, tweets, followers, and following data
+  data/        Mock data retained for profile and follower screens not yet migrated
   pages/       Application screens
   firebase.js  Firebase Authentication and Firestore setup
   App.jsx      Routes and shared application layout
@@ -99,7 +99,7 @@ src/
 
 ## Team contributions
 
-- **Oscar:** application shell, shared routes, Firebase setup, mock data, account and publishing screens, and project documentation.
+- **Oscar:** application shell, shared routes, Firebase setup, account screens, username search and follow actions, and project documentation.
 - **Yoseth:** tweet and user cards, feed, user profile, followers and following lists, and pagination.
 
 ## Firestore tweet publishing
@@ -111,3 +111,9 @@ The application validates that a tweet contains text and does not exceed 280 cha
 The feed listens for Firestore changes in real time and displays tweets from newest to oldest. The home page also listens for changes and displays the user's three latest tweets. When a Google user signs in without a Firestore profile, the application creates a public profile with a generated username.
 
 Firestore security rules are maintained in `firestore.rules`. The local Firebase configuration belongs in `.env.local`; do not commit that file.
+
+## Following users with Firestore
+
+The `/following` page searches for an exact username, with or without `@`, and ignores letter case. It resolves the username through `usernameIndex`, displays the public Firestore profile, and lets the signed-in user follow or unfollow that account.
+
+Follow relationships are stored at `follows/{followerId}/following/{followedId}`. Firestore rules prevent users from following themselves, creating duplicate relationships, or changing another user's follow records. The following list updates in real time. Follower lists and some profile screens still use mock data.

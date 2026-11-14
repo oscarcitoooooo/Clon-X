@@ -122,7 +122,8 @@ service cloud.firestore {
     }
 
     match /follows/{followerId}/following/{followedId} {
-      allow read: if owns(followerId);
+      // Follow relationships are visible to signed-in users for public lists and counters.
+      allow read: if signedIn();
 
       allow create: if owns(followerId)
         && followerId != followedId
@@ -145,6 +146,11 @@ service cloud.firestore {
 
       allow update: if false;
       allow delete: if owns(followerId);
+    }
+
+    // Required to authorize collectionGroup("following") queries for follower lists and counts.
+    match /{path=**}/following/{followedId} {
+      allow read: if signedIn();
     }
   }
 }

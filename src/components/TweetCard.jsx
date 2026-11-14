@@ -3,10 +3,13 @@ import { Link } from "react-router";
 function TweetCard({ tweet, user }) {
   const fullName = user?.fullName ?? "Usuario desconocido";
   const username = user?.username ?? "usuario";
+  const createdAt = tweet.createdAt?.toDate
+    ? tweet.createdAt.toDate()
+    : new Date(tweet.createdAt);
   const publishedAt = new Intl.DateTimeFormat("es-CO", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(tweet.createdAt));
+  }).format(createdAt);
 
   return (
     <article className="card border-0 shadow-sm mb-3">

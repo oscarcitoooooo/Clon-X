@@ -4,9 +4,9 @@ A React single-page application that recreates selected X social network screens
 
 ## Project status
 
-- **Milestone 1:** Main screens, navigation, mock feed, profiles, lists, and pagination are implemented.
-- **Milestone 2 in progress:** Firebase Authentication supports Google and username/password accounts. Account registration and profile data use Cloud Firestore. Tweet publishing, live social data, and follow actions are still being developed.
-- **Milestone 3 pending:** Dynamic follower/following lists and follow actions across profiles.
+- **Milestone 1:** Main screens, navigation, account pages, and pagination are implemented.
+- **Milestone 2:** Firebase Authentication supports Google and username/password accounts. Account registration, tweet publishing, the feed, and following actions use Cloud Firestore.
+- **Milestone 3 in progress:** User profiles, profile posts, and the signed-in user's follower list are being connected to Firestore.
 
 ## Technologies
 
@@ -23,12 +23,13 @@ A React single-page application that recreates selected X social network screens
 - Protected routes and persistent Firebase sessions.
 - Home screen with follower and following counters.
 - Tweet composition screen.
-- Chronological mock feed with pagination.
+- Chronological Firestore feed with pagination.
 - User profiles with tweets and counters.
-- Alphabetically sorted mock followers and following lists.
+- User profiles and their posts loaded from Firestore.
+- Followers and following lists loaded from Firestore for the signed-in account.
 - Pagination with a maximum of 10 items per page.
 
-Posts and follow actions still use mock data and are not saved to Firestore yet.
+The mock data file remains for sample content and screens not yet migrated; current publishing, feed, profile, and follower/following features use Firestore.
 
 ## Firebase setup
 
@@ -90,7 +91,7 @@ Open the local URL printed in the terminal.
 ```text
 src/
   components/  Reusable tweet, user, and pagination components
-  data/        Mock data retained for profile and follower screens not yet migrated
+  data/        Sample content retained for screens not yet migrated
   pages/       Application screens
   firebase.js  Firebase Authentication and Firestore setup
   App.jsx      Routes and shared application layout
@@ -116,4 +117,8 @@ Firestore security rules are maintained in `firestore.rules`. The local Firebase
 
 The `/following` page searches for an exact username, with or without `@`, and ignores letter case. It resolves the username through `usernameIndex`, displays the public Firestore profile, and lets the signed-in user follow or unfollow that account.
 
-Follow relationships are stored at `follows/{followerId}/following/{followedId}`. Firestore rules prevent users from following themselves, creating duplicate relationships, or changing another user's follow records. The following list updates in real time. Follower lists and some profile screens still use mock data.
+Follow relationships are stored at `follows/{followerId}/following/{followedId}`. Firestore rules prevent users from following themselves, creating duplicate relationships, or changing another user's follow records. The following list updates in real time.
+
+## Firestore profiles and followers
+
+The `/users/:username` route resolves a public profile through `usernameIndex`, then listens for that user's tweets and sorts them newest first. The `/followers` page uses a collection group query for relationships whose `followedId` is the signed-in user's ID. Signed-in users can read public follow relationships so follower lists and profile counters can update live. The home page and profile screens listen to Firestore for follower and following totals. Profiles can be followed or unfollowed from the profile screen.

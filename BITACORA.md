@@ -48,7 +48,14 @@ Se conecto el boton de Google con Firebase Authentication mediante el SDK web. L
 - Vite
 
 ## 4. Estado del proyecto
-La autenticacion con Google y con usuario y contrasena esta conectada. La publicacion de tweets, el feed y las publicaciones recientes de Inicio usan Firestore y se validaron manualmente. La busqueda y el seguimiento de usuarios por nombre de usuario se implementan en el avance 2.13; las paginas de seguidores y algunos perfiles aun conservan datos de prueba.
+La autenticacion con Google y con usuario y contrasena esta conectada. La publicacion de tweets, el feed, los perfiles y las listas de seguidores/seguidos usan Firestore. Las pantallas se validan manualmente durante el desarrollo.
+
+## 2.14 Perfiles y seguidores conectados con Firestore
+**Fecha:** 2026-11-13
+**Herramienta y modelo:** Codex, GPT-6
+**Solicitud del estudiante:** Implementar la carga de perfiles, publicaciones y seguidores reales con Firestore, conservando los flujos de autenticación y seguimiento existentes.
+**Asistencia recibida:** Se conectó la ruta de perfil al índice de nombres de usuario y a las publicaciones de Firestore; se conectó la lista de seguidores a las relaciones donde la cuenta autenticada es el destinatario; se agregó el estado de carga y los mensajes de error/vacío; y se habilitó seguir o dejar de seguir desde el perfil. Las relaciones de seguimiento son visibles para cuentas autenticadas para mostrar perfiles, listas y contadores en tiempo real. El formato de fecha acepta marcas de tiempo de Firestore.
+**Archivos modificados:** `src/pages/UserTweetsPage.jsx`, `src/pages/FollowersPage.jsx`, `src/components/TweetCard.jsx`, `firestore.rules`, `README.md`.
 
 ## 5. Conclusion
 Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, organizar el codigo e integrar autenticacion con Firebase. La bitacora registra tambien la asistencia de IA utilizada durante el desarrollo.
@@ -94,3 +101,17 @@ Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, org
 **Archivos modificados:** `firestore.rules`, `src/pages/FollowingPage.jsx`, `README.md` y `BITACORA.md`.
 
 **Validacion manual:** Pendiente de revision y prueba por Oscar.
+
+## 2.15 Contadores de seguidores y seguidos en tiempo real
+
+**Fecha:** 2026-11-13
+
+**Herramienta y modelo:** Codex, GPT-6
+
+**Resumen de la solicitud del estudiante:** Corregir los contadores para que reflejen inmediatamente las relaciones de seguimiento entre Oscar y Yoseth.
+
+**Asistencia recibida:** Se conectaron los contadores de Inicio y de los perfiles a listeners de Firestore sobre las relaciones `follows/{followerId}/following/{followedId}`. Las pantallas ahora muestran los valores al recibir la primera respuesta y se actualizan al seguir o dejar de seguir, sin recargar. Se ajustaron las reglas para permitir que usuarios autenticados consulten relaciones públicas y los contadores de perfiles, y se documentó ese comportamiento.
+
+**Archivos modificados:** `src/pages/HomePage.jsx`, `src/pages/UserTweetsPage.jsx`, `firestore.rules`, `README.md` y `BITACORA.md`.
+
+**Validacion manual:** Pendiente de prueba con dos cuentas autenticadas y aprobacion del equipo.

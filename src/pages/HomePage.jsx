@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   collection,
+  collectionGroup,
   doc,
   onSnapshot,
   query,
@@ -14,6 +15,9 @@ import { useAuth } from "./LoginPage";
 function HomePage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [followersCount, setFollowersCount] = useState(null);
+  const [followingCount, setFollowingCount] = useState(null);
+  const [relationshipError, setRelationshipError] = useState("");
   const [recentTweets, setRecentTweets] = useState([]);
   const [isLoadingTweets, setIsLoadingTweets] = useState(true);
   const [error, setError] = useState("");
@@ -24,6 +28,10 @@ function HomePage() {
       return undefined;
     }
 
+    setFollowersCount(null);
+    setFollowingCount(null);
+    setRelationshipError("");
+
     const profileRef = doc(firestoreDb, "users", user.uid);
     const profileUnsubscribe = onSnapshot(
       profileRef,
@@ -33,6 +41,22 @@ function HomePage() {
       () => {
         setError("No se pudo cargar tu perfil.");
       },
+    );
+
+    const followingUnsubscribe = onSnapshot(
+      collection(firestoreDb, "follows", user.uid, "following"),
+      (snapshot) => setFollowingCount(snapshot.size),
+      () => setRelationshipError("No se pudo cargar el contador de usuarios seguidos."),
+    );
+
+    const followersQuery = query(
+      collectionGroup(firestoreDb, "following"),
+      where("followedId", "==", user.uid),
+    );
+    const followersUnsubscribe = onSnapshot(
+      followersQuery,
+      (snapshot) => setFollowersCount(snapshot.size),
+      () => setRelationshipError("No se pudo cargar el contador de seguidores."),
     );
 
     const userTweetsQuery = query(
@@ -73,6 +97,8 @@ function HomePage() {
 
     return () => {
       profileUnsubscribe();
+      followingUnsubscribe();
+      followersUnsubscribe();
       tweetsUnsubscribe();
     };
   }, [user?.uid]);
@@ -81,9 +107,6 @@ function HomePage() {
   const fullName =
     profile?.fullName ?? user?.displayName ?? emailUsername ?? "Usuario";
   const username = profile?.username ?? emailUsername ?? "usuario";
-  const followersCount = profile?.followersCount ?? 0;
-  const followingCount = profile?.followingCount ?? 0;
-
   return (
     <>
       <section className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -106,7 +129,7 @@ function HomePage() {
             <div className="card-body p-4">
               <h2 className="h6 text-secondary">Seguidores</h2>
               <p className="display-6 fw-bold mb-3">
-                {followersCount.toLocaleString("es-CO")}
+                {followersCount === null ? "…" : followersCount.toLocaleString("es-CO")}
               </p>
               <Link className="text-decoration-none" to="/followers">
                 Ver seguidores
@@ -120,7 +143,7 @@ function HomePage() {
             <div className="card-body p-4">
               <h2 className="h6 text-secondary">Siguiendo</h2>
               <p className="display-6 fw-bold mb-3">
-                {followingCount.toLocaleString("es-CO")}
+                {followingCount === null ? "…" : followingCount.toLocaleString("es-CO")}
               </p>
               <Link className="text-decoration-none" to="/following">
                 Ver usuarios seguidos
@@ -129,6 +152,12 @@ function HomePage() {
           </section>
         </div>
       </div>
+
+      {relationshipError && (
+        <div className="alert alert-warning" role="status">
+          {relationshipError}
+        </div>
+      )}
 
       <section>
         <div className="d-flex justify-content-between align-items-center mb-3">

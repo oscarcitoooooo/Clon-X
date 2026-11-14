@@ -52,7 +52,7 @@ function AppHeader() {
   const navigate = useNavigate();
   const navLinkClass = ({ isActive }) =>
     `nav-link px-0 ${isActive ? "active fw-semibold text-primary" : "text-secondary"}`;
-  const username = user?.username ?? user?.displayName ?? user?.email?.split("@")[0] ?? "usuario";
+  const username = user?.username ?? user?.email?.split("@")[0] ?? user?.displayName ?? "usuario";
 
   async function handleLogout() {
     await logout();

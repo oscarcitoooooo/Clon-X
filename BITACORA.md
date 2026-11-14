@@ -52,3 +52,17 @@ La autenticacion con Google mediante Firebase esta conectada y validada manualme
 
 ## 5. Conclusion
 Con este proyecto he aprendido a crear componentes en React, usar Bootstrap, organizar el codigo e integrar autenticacion con Firebase. La bitacora registra tambien la asistencia de IA utilizada durante el desarrollo.
+
+## 2.10 Inicio de sesion con usuario y contrasena en Firebase
+**Fecha y hora:** 2026-11-13 19:05 (America/Bogota)  
+**Herramienta y modelo:** Codex, GPT-6  
+**Mensaje del estudiante:** “si” (respuesta a la propuesta de usar un identificador interno derivado del nombre de usuario para conservar el inicio de sesion por usuario y mantener privado el correo real).  
+**Resumen de la respuesta:** Se conecto el inicio de sesion por nombre de usuario a Firebase Authentication usando el identificador interno acordado. Se retiro el acceso local de demostracion para que las cuentas nuevas utilicen Firebase; se mantuvo el acceso con Google y se ajusto el encabezado para mostrar el nombre de usuario.  
+**Archivos modificados:** `src/pages/LoginPage.jsx`, `src/App.jsx`.
+
+## 2.11 Documentacion de Firebase y configuracion local
+**Fecha y hora:** 2026-11-13 19:23 (America/Bogota)  
+**Herramienta y modelo:** Codex, GPT-6  
+**Mensaje del estudiante:** “si” (confirmacion de que el inicio con Google siguio funcionando).  
+**Resumen de la respuesta:** Se actualizo el README para reflejar la autenticacion y el estado de Milestone 2, se agrego una plantilla de variables locales para Firebase y se versionaron las reglas actuales de Firestore. La plantilla no contiene credenciales reales.  
+**Archivos creados o modificados:** `README.md`, `.env.example`, `firestore.rules`.

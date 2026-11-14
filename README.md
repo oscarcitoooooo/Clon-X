@@ -101,3 +101,13 @@ src/
 
 - **Oscar:** application shell, shared routes, Firebase setup, mock data, account and publishing screens, and project documentation.
 - **Yoseth:** tweet and user cards, feed, user profile, followers and following lists, and pagination.
+
+## Firestore tweet publishing
+
+Authenticated users can publish tweets to the `tweets` collection in Cloud Firestore. Each document stores the content, author ID, username, and server creation timestamp.
+
+The application validates that a tweet contains text and does not exceed 280 characters. Firestore rules require an authenticated user, verify that the author ID and username match the signed-in user's profile, and prevent tweet updates or deletion.
+
+The feed listens for Firestore changes in real time and displays tweets from newest to oldest. The home page also listens for changes and displays the user's three latest tweets. When a Google user signs in without a Firestore profile, the application creates a public profile with a generated username.
+
+Firestore security rules are maintained in `firestore.rules`. The local Firebase configuration belongs in `.env.local`; do not commit that file.
